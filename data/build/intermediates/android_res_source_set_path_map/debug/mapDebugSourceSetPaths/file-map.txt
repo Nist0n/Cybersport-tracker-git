@@ -1,0 +1,8 @@
+ru.mirea.pavlovve.cybersporttracker.data-pngs-0 D:\Cybersport-tracker\data\build\generated\res\pngs\debug
+ru.mirea.pavlovve.cybersporttracker.data-updated_navigation_xml-1 D:\Cybersport-tracker\data\build\generated\updated_navigation_xml\debug
+ru.mirea.pavlovve.cybersporttracker.data-mergeDebugResources-2 D:\Cybersport-tracker\data\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+ru.mirea.pavlovve.cybersporttracker.data-mergeDebugResources-3 D:\Cybersport-tracker\data\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+ru.mirea.pavlovve.cybersporttracker.data-debug-4 D:\Cybersport-tracker\data\build\intermediates\merged_res\debug\mergeDebugResources
+ru.mirea.pavlovve.cybersporttracker.data-debug-5 D:\Cybersport-tracker\data\build\intermediates\packaged_res\debug\packageDebugResources
+ru.mirea.pavlovve.cybersporttracker.data-debug-6 D:\Cybersport-tracker\data\src\debug\res
+ru.mirea.pavlovve.cybersporttracker.data-main-7 D:\Cybersport-tracker\data\src\main\res

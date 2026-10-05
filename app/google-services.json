@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "646907032701",
+    "project_id": "cybersport-tracker",
+    "storage_bucket": "cybersport-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646907032701:android:fd3fef7577fbb1a079ad14",
+        "android_client_info": {
+          "package_name": "ru.mirea.pavlovve.cybersporttracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIDEm2Fb2c-c9DlKuEaTbLptCp3l00Li0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
