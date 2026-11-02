@@ -2,7 +2,10 @@ package ru.mirea.pavlovve.cybersporttracker;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -10,22 +13,36 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.List;
-import java.util.Locale;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 
-import ru.mirea.pavlovve.cybersporttracker.domain.models.Match;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.Prediction;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.Tournament;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.User;
 import ru.mirea.pavlovve.cybersporttracker.presentation.AppContainer;
 import ru.mirea.pavlovve.cybersporttracker.presentation.LoginActivity;
+import ru.mirea.pavlovve.cybersporttracker.presentation.teamdetails.TeamDetailsActivity;
+import ru.mirea.pavlovve.cybersporttracker.presentation.teams.TeamsAdapter;
+import ru.mirea.pavlovve.cybersporttracker.presentation.teams.TeamsUiState;
+import ru.mirea.pavlovve.cybersporttracker.presentation.teams.TeamsViewModel;
+import ru.mirea.pavlovve.cybersporttracker.presentation.teams.TeamsViewModelFactory;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TeamsAdapter.Listener {
 
-    private AppContainer container;
-    private TextView resultView;
+    private TeamsViewModel viewModel;
+    private TeamsAdapter adapter;
+
+    private RecyclerView recyclerView;
+    private View loadingView;
+    private View emptyView;
+    private TextView countView;
+    private MaterialCardView guestCard;
+    private EditText searchInput;
     private User currentUser;
 
     @Override
@@ -34,172 +51,134 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+        View root = findViewById(R.id.mainRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             return insets;
         });
 
-        container = new AppContainer(this);
-        resultView = findViewById(R.id.textViewResult);
+        AppContainer container = AppContainer.get(this);
+        viewModel = new ViewModelProvider(this, new TeamsViewModelFactory(container))
+                .get(TeamsViewModel.class);
 
-        currentUser = container.profile().execute();
+        recyclerView = findViewById(R.id.recyclerTeams);
+        loadingView = findViewById(R.id.loadingView);
+        emptyView = findViewById(R.id.emptyView);
+        countView = findViewById(R.id.textTeamsCount);
+        guestCard = findViewById(R.id.cardGuestHint);
+        searchInput = findViewById(R.id.editSearch);
 
-        bind(R.id.buttonLogout, v -> logout());
-        bind(R.id.buttonProfile, v -> showProfile());
-        bind(R.id.buttonTeams, v -> showTeams());
-        bind(R.id.buttonSearch, v -> searchTeams());
-        bind(R.id.buttonTeamDetails, v -> showTeamDetails());
-        bind(R.id.buttonTournaments, v -> showTournaments());
-        bind(R.id.buttonMatches, v -> showMatches());
-        bind(R.id.buttonFavorite, v -> addFavorite());
-        bind(R.id.buttonSubscribe, v -> subscribe());
-        bind(R.id.buttonPrediction, v -> makePrediction());
-        bind(R.id.buttonHistory, v -> showHistory());
-        bind(R.id.buttonLogo, v -> recognizeLogo());
+        adapter = new TeamsAdapter(this);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+        recyclerView.setHasFixedSize(true);
 
-        showInfo();
+        findViewById(R.id.buttonProfile).setOnClickListener(v -> showProfile());
+        findViewById(R.id.buttonGuestLogin).setOnClickListener(v -> openLogin());
+
+        setupSearch();
+        setupFilters();
+
+        viewModel.getState().observe(this, this::render);
+        viewModel.getMessage().observe(this, messageRes ->
+                Snackbar.make(root, messageRes, Snackbar.LENGTH_LONG).show());
+        viewModel.getLoggedOut().observe(this, loggedOut -> {
+            if (Boolean.TRUE.equals(loggedOut)) {
+                openLogin();
+            }
+        });
     }
 
-    private void bind(int buttonId, android.view.View.OnClickListener listener) {
-        Button button = findViewById(buttonId);
-        button.setOnClickListener(listener);
+    private void setupSearch() {
+        searchInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                viewModel.setQuery(s == null ? "" : s.toString());
+            }
+        });
     }
 
-    private void showInfo() {
-        resultView.setText(getString(R.string.demo_info,
-                container.teams().execute().size(),
-                container.tournaments().execute().size(),
-                container.matches().execute().size())
-                + "\n" + getString(R.string.session_info,
-                AppContainer.formatUser(currentUser)));
+    private void setupFilters() {
+        ChipGroup chipGroup = findViewById(R.id.chipGroup);
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                return;
+            }
+            int checkedId = checkedIds.get(0);
+            if (checkedId == R.id.chipRussia) {
+                viewModel.setCountry(getString(R.string.country_russia));
+            } else if (checkedId == R.id.chipUkraine) {
+                viewModel.setCountry(getString(R.string.country_ukraine));
+            } else if (checkedId == R.id.chipUsa) {
+                viewModel.setCountry(getString(R.string.country_usa));
+            } else if (checkedId == R.id.chipFrance) {
+                viewModel.setCountry(getString(R.string.country_france));
+            } else {
+                viewModel.setCountry("");
+            }
+        });
     }
 
-    private void logout() {
-        container.userRepository().logout();
-        currentUser = null;
+    private void render(TeamsUiState state) {
+        currentUser = state.getUser();
+        adapter.submitList(state.getTeams());
+
+        boolean showList = !state.isLoading() && !state.isEmpty();
+        recyclerView.setVisibility(showList ? View.VISIBLE : View.INVISIBLE);
+        loadingView.setVisibility(state.isLoading() ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(state.isEmpty() ? View.VISIBLE : View.GONE);
+        guestCard.setVisibility(state.isAuthorized() ? View.GONE : View.VISIBLE);
+
+        if (state.isLoading()) {
+            countView.setText(R.string.teams_loading);
+        } else if (state.hasFilter()) {
+            countView.setText(getString(R.string.teams_found, state.getFoundCount()));
+        } else {
+            countView.setText(getString(R.string.teams_total, state.getTotalCount()));
+        }
+    }
+
+    private void showProfile() {
+        if (currentUser == null) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.profile_guest_title)
+                    .setMessage(R.string.profile_guest_message)
+                    .setPositiveButton(R.string.btn_sign_in, (dialog, which) -> openLogin())
+                    .setNegativeButton(R.string.action_close, null)
+                    .show();
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(currentUser.getNickname())
+                .setMessage(currentUser.getEmail() + "\n\n" + getString(R.string.profile_role))
+                .setPositiveButton(R.string.btn_logout, (dialog, which) -> viewModel.logout())
+                .setNegativeButton(R.string.action_close, null)
+                .show();
+    }
+
+    private void openLogin() {
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
-    private void showProfile() {
-        User user = container.profile().execute();
-        currentUser = user;
-        resultView.setText(getString(R.string.profile_header,
-                AppContainer.formatUser(user)));
+    @Override
+    public void onTeamClick(Team team) {
+        Intent intent = new Intent(this, TeamDetailsActivity.class);
+        intent.putExtra(TeamDetailsActivity.EXTRA_TEAM_ID, team.getId());
+        startActivity(intent);
     }
 
-    private void showTeams() {
-        List<Team> teams = container.teams().execute();
-        resultView.setText(getString(R.string.teams_header, teams.size())
-                + "\n" + AppContainer.formatTeams(teams));
-    }
-
-    private void searchTeams() {
-        List<Team> teams = container.teams().execute("Россия");
-        resultView.setText(getString(R.string.search_header, teams.size())
-                + "\n" + AppContainer.formatTeams(teams));
-    }
-
-    private void showTeamDetails() {
-        Team team = container.teamById().execute(1);
-        if (team == null) {
-            resultView.setText(R.string.team_not_found);
-            return;
-        }
-        resultView.setText(getString(R.string.team_header, team.getName())
-                + "\n" + team.getShortInfo()
-                + "\n" + getString(R.string.team_players, team.getPlayers().toString())
-                + "\n" + team.getLogoUrl());
-    }
-
-    private void showTournaments() {
-        List<Tournament> tournaments = container.tournaments().execute();
-        resultView.setText(getString(R.string.tournaments_header, tournaments.size())
-                + "\n" + AppContainer.formatTournaments(tournaments));
-    }
-
-    private void showMatches() {
-        List<Match> matches = container.matches().execute();
-        resultView.setText(getString(R.string.matches_header, matches.size())
-                + "\n" + AppContainer.formatMatches(matches));
-    }
-
-    private boolean ensureAuthorized() {
-        if (currentUser == null) {
-            resultView.setText(R.string.need_login);
-            return false;
-        }
-        return true;
-    }
-
-    private void addFavorite() {
-        if (!ensureAuthorized()) {
-            return;
-        }
-        Team team = container.teamById().execute(2);
-        boolean added = container.addToFavorites().execute(team);
-        resultView.setText(added
-                ? getString(R.string.favorite_added, team.getShortInfo())
-                : getString(R.string.favorite_exists, team.getShortInfo()));
-    }
-
-    private void subscribe() {
-        if (!ensureAuthorized()) {
-            return;
-        }
-        Tournament tournament = container.tournaments().execute(1);
-        boolean subscribed = container.subscribe().execute(tournament);
-        resultView.setText(subscribed
-                ? getString(R.string.subscribe_done, tournament.getName())
-                : getString(R.string.subscribe_exists, tournament.getName()));
-    }
-
-    private void makePrediction() {
-        if (!ensureAuthorized()) {
-            return;
-        }
-        Match match = container.matches().execute(1);
-        Team team = match.getHomeTeam();
-        Prediction prediction = new Prediction(
-                0,
-                match.getId(),
-                team.getTag(),
-                "2:1",
-                1.5,
-                Prediction.STATUS_PENDING
-        );
-        boolean accepted = container.makePrediction().execute(prediction);
-        resultView.setText(accepted
-                ? getString(R.string.prediction_done, team.getTag(), match.getShortInfo())
-                : getString(R.string.prediction_failed));
-    }
-
-    private void showHistory() {
-        if (!ensureAuthorized()) {
-            return;
-        }
-        List<Prediction> history = container.predictionHistory().execute();
-        if (history.isEmpty()) {
-            resultView.setText(R.string.history_empty);
-            return;
-        }
-        StringBuilder builder = new StringBuilder(getString(R.string.history_header,
-                history.size()));
-        for (Prediction prediction : history) {
-            builder.append("\n• ").append(prediction.getShortInfo());
-        }
-        resultView.setText(builder.toString());
-    }
-
-    private void recognizeLogo() {
-        if (!ensureAuthorized()) {
-            return;
-        }
-        String teamTag = container.logoRecognizer()
-                .execute("content://gallery/logos/navi_logo.png");
-        resultView.setText(teamTag == null
-                ? getString(R.string.logo_failed)
-                : String.format(Locale.ROOT, getString(R.string.logo_done), teamTag));
+    @Override
+    public void onFavoriteClick(Team team) {
+        viewModel.toggleFavorite(team);
     }
 }

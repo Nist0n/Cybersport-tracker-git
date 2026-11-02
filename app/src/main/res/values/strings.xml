@@ -3,54 +3,65 @@
     <string name="screen_subtitle">Киберспортивный трекер: слои presentation → domain → data</string>
     <string name="result_hint">Нажмите кнопку, чтобы выполнить сценарий использования</string>
 
-    <string name="login_title">Вход в Киберспортивный трекер</string>
-    <string name="login_subtitle">Авторизация через Firebase Auth (модули app / domain / data)</string>
+    <!-- Авторизация -->
+    <string name="login_title">Добро пожаловать</string>
+    <string name="login_subtitle">Войдите, чтобы сохранять команды, турниры и прогнозы</string>
     <string name="login_hint">E-mail</string>
     <string name="password_hint">Пароль</string>
     <string name="btn_sign_in">Войти</string>
     <string name="btn_sign_up">Создать аккаунт</string>
-    <string name="login_hint_credentials">Тестовый доступ (пока не добавлен google-services.json):\nadmin / 1234 или user / user</string>
-    <string name="login_mock_note">Firebase не настроен — работаем на тестовых данных.\nadmin / 1234 или user / user</string>
+    <string name="login_hint_credentials">Тестовый доступ: admin@test.ru / 123456</string>
+    <string name="login_mock_note">Тестовый доступ: admin@test.ru / 123456</string>
     <string name="login_empty_fields">Введите e-mail и пароль</string>
     <string name="login_in_progress">Выполняется вход…</string>
     <string name="login_error">Не удалось войти: проверьте e-mail и пароль</string>
     <string name="register_error">Не удалось зарегистрировать: возможно, аккаунт уже существует</string>
+    <string name="login_logo_description">Логотип Cybersport Tracker</string>
+    <string name="login_skip">Продолжить без входа</string>
 
-    <string name="btn_logout">Выход из аккаунта</string>
-    <string name="btn_profile">Личный профиль</string>
-    <string name="btn_teams">Просмотр списка команд</string>
-    <string name="btn_search">Поиск команд («Россия»)</string>
-    <string name="btn_team_details">Просмотр страницы команды</string>
-    <string name="btn_tournaments">Просмотр списка турниров</string>
-    <string name="btn_matches">Просмотр расписания матчей</string>
-    <string name="btn_favorite">Добавить команду в избранное (Room)</string>
-    <string name="btn_subscribe">Подписка на турнир (Room)</string>
-    <string name="btn_prediction">Оставить прогноз на матч (Room)</string>
-    <string name="btn_history">История прогнозов (Room)</string>
-    <string name="btn_logo">Распознать логотип команды (TFLite)</string>
+    <!-- Общие действия -->
+    <string name="btn_logout">Выйти из аккаунта</string>
+    <string name="action_close">Закрыть</string>
+    <string name="btn_profile">Профиль</string>
 
-    <string name="demo_info">Данные из NetworkApi (JSON):\nкоманд: %1$d, турниров: %2$d, матчей: %3$d</string>
-    <string name="session_info">Сессия (SharedPreferences): %1$s</string>
-    <string name="profile_header">Профиль:\n%1$s</string>
+    <!-- Экран «Команды» -->
+    <string name="teams_title">Команды</string>
+    <string name="teams_search_hint">Поиск команды</string>
+    <string name="filter_all">Все</string>
+    <string name="country_russia">Россия</string>
+    <string name="country_ukraine">Украина</string>
+    <string name="country_usa">США</string>
+    <string name="country_france">Франция</string>
+    <string name="teams_loading">Загрузка команд…</string>
+    <string name="teams_total">Всего команд: %1$d</string>
+    <string name="teams_found">Найдено команд: %1$d</string>
+    <string name="teams_empty_title">Команды не найдены</string>
+    <string name="teams_empty_subtitle">Попробуйте изменить запрос</string>
+    <string name="teams_guest_hint">Войдите, чтобы сохранять команды</string>
+    <string name="teams_login_hint">Войдите, чтобы сохранять</string>
+    <string name="teams_login_action">Войти</string>
+    <string name="team_favorite_add">Добавить в избранное</string>
+    <string name="team_favorite_remove">Убрать из избранного</string>
+    <string name="team_add_favorite">В избранное</string>
+    <string name="team_in_favorites">В избранном</string>
+    <string name="teams_list_description">Список команд</string>
 
-    <string name="teams_header">Команды (%1$d):</string>
-    <string name="search_header">Найдено команд: %1$d</string>
-    <string name="team_header">Страница команды: %1$s</string>
-    <string name="team_players">Состав: %1$s</string>
+    <!-- Карточка команды -->
+    <string name="team_details_title">Команда</string>
+    <string name="team_section_players">Состав</string>
+    <string name="team_section_matches">Матчи команды</string>
+    <string name="team_section_info">Информация</string>
+    <string name="team_players_empty">Состав пока не указан</string>
+    <string name="team_matches_empty">Ближайших матчей нет</string>
+    <string name="team_info_country">Страна</string>
+    <string name="team_info_rank">Место в рейтинге</string>
+    <string name="team_info_logo">Логотип</string>
+    <string name="team_info_logo_value">Локальный ресурс</string>
     <string name="team_not_found">Команда не найдена</string>
-    <string name="tournaments_header">Турниры (%1$d):</string>
-    <string name="matches_header">Матчи (%1$d):</string>
+    <string name="button_back">Назад</string>
 
-    <string name="need_login">Сценарий доступен только авторизованному пользователю</string>
-    <string name="favorite_added">Сохранено в БД (Room), избранное:\n%1$s</string>
-    <string name="favorite_exists">Уже в избранном:\n%1$s</string>
-    <string name="subscribe_done">Подписка оформлена (Room): %1$s</string>
-    <string name="subscribe_exists">Подписка уже оформлена: %1$s</string>
-    <string name="prediction_done">Прогноз сохранён в БД: %1$s\n%2$s</string>
-    <string name="prediction_failed">Прогноз не принят: проверьте данные матча</string>
-    <string name="history_header">История прогнозов из БД (%1$d):</string>
-    <string name="history_empty">История прогнозов пуста</string>
-
-    <string name="logo_done">Распознан логотип команды: %1$s</string>
-    <string name="logo_failed">Логотип распознать не удалось</string>
+    <!-- Профиль -->
+    <string name="profile_guest_title">Гость</string>
+    <string name="profile_guest_message">Войдите, чтобы сохранять команды, подписки и прогнозы</string>
+    <string name="profile_role">Аккаунт Cybersport Tracker</string>
 </resources>

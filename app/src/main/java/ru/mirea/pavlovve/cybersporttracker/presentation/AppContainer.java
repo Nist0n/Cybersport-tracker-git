@@ -2,6 +2,8 @@ package ru.mirea.pavlovve.cybersporttracker.presentation;
 
 import android.content.Context;
 
+import androidx.lifecycle.LiveData;
+
 import java.util.List;
 
 import ru.mirea.pavlovve.cybersporttracker.data.auth.AuthDataSource;
@@ -21,11 +23,7 @@ import ru.mirea.pavlovve.cybersporttracker.data.repository.UserRepositoryImpl;
 import ru.mirea.pavlovve.cybersporttracker.data.source.TfliteLogoDataSource;
 import ru.mirea.pavlovve.cybersporttracker.data.storage.ClientStorage;
 import ru.mirea.pavlovve.cybersporttracker.data.storage.SharedPreferencesClientStorage;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.Match;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.Tournament;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.User;
-import ru.mirea.pavlovve.cybersporttracker.domain.repository.FavoritesRepository;
 import ru.mirea.pavlovve.cybersporttracker.domain.repository.LogoRecognitionRepository;
 import ru.mirea.pavlovve.cybersporttracker.domain.repository.MatchRepository;
 import ru.mirea.pavlovve.cybersporttracker.domain.repository.PredictionRepository;
@@ -41,12 +39,16 @@ import ru.mirea.pavlovve.cybersporttracker.domain.usecase.GetTeamsUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.GetTournamentsUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.GetUserProfileUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.LoginUseCase;
+import ru.mirea.pavlovve.cybersporttracker.domain.usecase.LogoutUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.MakePredictionUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.RecognizeLogoUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.RegisterUseCase;
+import ru.mirea.pavlovve.cybersporttracker.domain.usecase.RemoveTeamFromFavoritesUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.SubscribeToTournamentUseCase;
 
 public class AppContainer {
+
+    private static volatile AppContainer instance;
 
     private final NetworkApi networkApi = new NetworkApi();
     private final TfliteLogoDataSource logoDataSource = new TfliteLogoDataSource();
@@ -60,13 +62,14 @@ public class AppContainer {
     private final TournamentRepository tournamentRepository;
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
-    private final FavoritesRepository favoritesRepository;
+    private final FavoritesRepositoryImpl favoritesRepository;
     private final PredictionRepository predictionRepository;
     private final LogoRecognitionRepository logoRecognitionRepository;
     private final TournamentSubscriptionRepository subscriptionRepository;
 
     private final LoginUseCase loginUseCase;
     private final RegisterUseCase registerUseCase;
+    private final LogoutUseCase logoutUseCase;
     private final GetTeamsUseCase getTeamsUseCase;
     private final GetTeamByIdUseCase getTeamByIdUseCase;
     private final GetTournamentsUseCase getTournamentsUseCase;
@@ -74,15 +77,16 @@ public class AppContainer {
     private final GetUserProfileUseCase getUserProfileUseCase;
     private final RecognizeLogoUseCase recognizeLogoUseCase;
     private final AddTeamToFavoritesUseCase addTeamToFavoritesUseCase;
+    private final RemoveTeamFromFavoritesUseCase removeTeamFromFavoritesUseCase;
     private final MakePredictionUseCase makePredictionUseCase;
     private final GetPredictionHistoryUseCase getPredictionHistoryUseCase;
     private final SubscribeToTournamentUseCase subscribeToTournamentUseCase;
 
-    public AppContainer(Context context) {
+    private AppContainer(Context context) {
+        Context appContext = context.getApplicationContext();
 
-        this.clientStorage = new SharedPreferencesClientStorage(context);
-
-        this.database = AppDatabase.getInstance(context);
+        this.clientStorage = new SharedPreferencesClientStorage(appContext);
+        this.database = AppDatabase.getInstance(appContext);
 
         this.teamRepository = new TeamRepositoryImpl(networkApi);
         this.tournamentRepository = new TournamentRepositoryImpl(networkApi);
@@ -98,6 +102,7 @@ public class AppContainer {
 
         this.loginUseCase = new LoginUseCase(userRepository);
         this.registerUseCase = new RegisterUseCase(userRepository);
+        this.logoutUseCase = new LogoutUseCase(userRepository);
         this.getTeamsUseCase = new GetTeamsUseCase(teamRepository);
         this.getTeamByIdUseCase = new GetTeamByIdUseCase(teamRepository);
         this.getTournamentsUseCase = new GetTournamentsUseCase(tournamentRepository);
@@ -105,10 +110,23 @@ public class AppContainer {
         this.getUserProfileUseCase = new GetUserProfileUseCase(userRepository);
         this.recognizeLogoUseCase = new RecognizeLogoUseCase(logoRecognitionRepository);
         this.addTeamToFavoritesUseCase = new AddTeamToFavoritesUseCase(favoritesRepository);
+        this.removeTeamFromFavoritesUseCase =
+                new RemoveTeamFromFavoritesUseCase(favoritesRepository);
         this.makePredictionUseCase = new MakePredictionUseCase(predictionRepository);
         this.getPredictionHistoryUseCase = new GetPredictionHistoryUseCase(predictionRepository);
         this.subscribeToTournamentUseCase =
                 new SubscribeToTournamentUseCase(subscriptionRepository);
+    }
+
+    public static AppContainer get(Context context) {
+        if (instance == null) {
+            synchronized (AppContainer.class) {
+                if (instance == null) {
+                    instance = new AppContainer(context);
+                }
+            }
+        }
+        return instance;
     }
 
     public LoginUseCase login() {
@@ -117,6 +135,10 @@ public class AppContainer {
 
     public RegisterUseCase register() {
         return registerUseCase;
+    }
+
+    public LogoutUseCase logout() {
+        return logoutUseCase;
     }
 
     public GetTeamsUseCase teams() {
@@ -147,6 +169,10 @@ public class AppContainer {
         return addTeamToFavoritesUseCase;
     }
 
+    public RemoveTeamFromFavoritesUseCase removeFromFavorites() {
+        return removeTeamFromFavoritesUseCase;
+    }
+
     public MakePredictionUseCase makePrediction() {
         return makePredictionUseCase;
     }
@@ -163,35 +189,15 @@ public class AppContainer {
         return userRepository;
     }
 
+    public LiveData<List<Team>> observeFavoriteTeams() {
+        return favoritesRepository.observeFavoriteTeams();
+    }
+
     public boolean isFirebaseNotConfigured() {
         return !authDataSource.isConfigured();
     }
 
-    public static String formatTeams(List<Team> teams) {
-        StringBuilder builder = new StringBuilder();
-        for (Team team : teams) {
-            builder.append("• ").append(team.getShortInfo()).append('\n');
-        }
-        return builder.toString();
-    }
-
-    public static String formatTournaments(List<Tournament> tournaments) {
-        StringBuilder builder = new StringBuilder();
-        for (Tournament tournament : tournaments) {
-            builder.append("• ").append(tournament.getShortInfo()).append('\n');
-        }
-        return builder.toString();
-    }
-
-    public static String formatMatches(List<Match> matches) {
-        StringBuilder builder = new StringBuilder();
-        for (Match match : matches) {
-            builder.append("• ").append(match.getShortInfo()).append('\n');
-        }
-        return builder.toString();
-    }
-
-    public static String formatUser(User user) {
-        return user == null ? "Пользователь не авторизован" : user.getShortInfo();
+    static String formatTeam(Team team) {
+        return team == null ? "Команда не найдена" : team.getShortInfo();
     }
 }

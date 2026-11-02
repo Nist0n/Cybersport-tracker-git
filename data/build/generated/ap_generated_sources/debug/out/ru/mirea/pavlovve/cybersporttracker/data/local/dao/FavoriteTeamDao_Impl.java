@@ -1,6 +1,7 @@
 package ru.mirea.pavlovve.cybersporttracker.data.local.dao;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.room.EntityInsertAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.util.DBUtil;
@@ -78,6 +79,66 @@ public final class FavoriteTeamDao_Impl implements FavoriteTeamDao {
   public List<FavoriteTeamEntity> getAll() {
     final String _sql = "SELECT * FROM favorite_teams";
     return DBUtil.performBlocking(__db, true, false, (_connection) -> {
+      final SQLiteStatement _stmt = _connection.prepare(_sql);
+      try {
+        final int _columnIndexOfId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "id");
+        final int _columnIndexOfTag = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "tag");
+        final int _columnIndexOfName = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "name");
+        final int _columnIndexOfCountry = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "country");
+        final int _columnIndexOfLogoUrl = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "logoUrl");
+        final int _columnIndexOfWorldRank = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "worldRank");
+        final int _columnIndexOfPlayers = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "players");
+        final List<FavoriteTeamEntity> _result = new ArrayList<FavoriteTeamEntity>();
+        while (_stmt.step()) {
+          final FavoriteTeamEntity _item;
+          final int _tmpId;
+          _tmpId = (int) (_stmt.getLong(_columnIndexOfId));
+          final String _tmpTag;
+          if (_stmt.isNull(_columnIndexOfTag)) {
+            _tmpTag = null;
+          } else {
+            _tmpTag = _stmt.getText(_columnIndexOfTag);
+          }
+          final String _tmpName;
+          if (_stmt.isNull(_columnIndexOfName)) {
+            _tmpName = null;
+          } else {
+            _tmpName = _stmt.getText(_columnIndexOfName);
+          }
+          final String _tmpCountry;
+          if (_stmt.isNull(_columnIndexOfCountry)) {
+            _tmpCountry = null;
+          } else {
+            _tmpCountry = _stmt.getText(_columnIndexOfCountry);
+          }
+          final String _tmpLogoUrl;
+          if (_stmt.isNull(_columnIndexOfLogoUrl)) {
+            _tmpLogoUrl = null;
+          } else {
+            _tmpLogoUrl = _stmt.getText(_columnIndexOfLogoUrl);
+          }
+          final int _tmpWorldRank;
+          _tmpWorldRank = (int) (_stmt.getLong(_columnIndexOfWorldRank));
+          final String _tmpPlayers;
+          if (_stmt.isNull(_columnIndexOfPlayers)) {
+            _tmpPlayers = null;
+          } else {
+            _tmpPlayers = _stmt.getText(_columnIndexOfPlayers);
+          }
+          _item = new FavoriteTeamEntity(_tmpId,_tmpTag,_tmpName,_tmpCountry,_tmpLogoUrl,_tmpWorldRank,_tmpPlayers);
+          _result.add(_item);
+        }
+        return _result;
+      } finally {
+        _stmt.close();
+      }
+    });
+  }
+
+  @Override
+  public LiveData<List<FavoriteTeamEntity>> observeAll() {
+    final String _sql = "SELECT * FROM favorite_teams ORDER BY worldRank ASC";
+    return __db.getInvalidationTracker().createLiveData(new String[] {"favorite_teams"}, false, (_connection) -> {
       final SQLiteStatement _stmt = _connection.prepare(_sql);
       try {
         final int _columnIndexOfId = SQLiteStatementUtil.getColumnIndexOrThrow(_stmt, "id");

@@ -23,12 +23,24 @@ public class CompositeAuthDataSource implements AuthDataSource {
 
     @Override
     public UserDto signIn(String login, String password) {
-        return active().signIn(login, password);
+        if (firebase.isConfigured()) {
+            UserDto result = firebase.signIn(login, password);
+            if (result != null) {
+                return result;
+            }
+        }
+        return fallback.signIn(login, password);
     }
 
     @Override
     public UserDto signUp(String login, String password) {
-        return active().signUp(login, password);
+        if (firebase.isConfigured()) {
+            UserDto result = firebase.signUp(login, password);
+            if (result != null) {
+                return result;
+            }
+        }
+        return fallback.signUp(login, password);
     }
 
     @Override

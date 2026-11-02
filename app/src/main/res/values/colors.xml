@@ -2,4 +2,24 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Палитра Cybersport Tracker -->
+    <color name="graphite">#0D1117</color>
+    <color name="surface">#161B22</color>
+    <color name="surface_elevated">#1E242E</color>
+    <color name="border">#262D38</color>
+
+    <color name="text_primary">#F2F5F9</color>
+    <color name="text_secondary">#98A2B3</color>
+
+    <color name="primary">#3E7BFA</color>
+    <color name="primary_dark">#2F63CC</color>
+    <color name="secondary">#7C6CFF</color>
+
+    <color name="live">#FF4D4F</color>
+    <color name="success">#2FBF71</color>
+    <color name="warning">#F5A524</color>
+    <color name="error">#E5484D</color>
+
+    <color name="transparent">#00000000</color>
 </resources>

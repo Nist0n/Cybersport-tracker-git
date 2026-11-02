@@ -33,5 +33,6 @@ dependencies {
     api(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
 
+    implementation(libs.lifecycle.livedata)
     implementation(libs.firebase.auth)
 }

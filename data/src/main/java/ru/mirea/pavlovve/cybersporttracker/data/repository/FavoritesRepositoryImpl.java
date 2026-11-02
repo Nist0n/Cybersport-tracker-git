@@ -1,5 +1,8 @@
 package ru.mirea.pavlovve.cybersporttracker.data.repository;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Transformations;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -50,5 +53,10 @@ public class FavoritesRepositoryImpl implements FavoritesRepository {
         }
         favoriteTeamDao.deleteById(teamId);
         return true;
+    }
+
+    public LiveData<List<Team>> observeFavoriteTeams() {
+        return Transformations.map(favoriteTeamDao.observeAll(),
+                FavoriteTeamEntityMapper::toDomainList);
     }
 }

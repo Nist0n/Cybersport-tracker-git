@@ -65,11 +65,11 @@ public class NetworkApi {
             + "]";
 
     private static final String USERS_JSON = "["
-            + "{\"id\":1,\"login\":\"admin\",\"password\":\"1234\","
-            + "\"nickname\":\"CyberTracker\",\"email\":\"admin@cybersport-tracker.ru\","
+            + "{\"id\":1,\"login\":\"admin@test.ru\",\"password\":\"123456\","
+            + "\"nickname\":\"CyberTracker\",\"email\":\"admin@test.ru\","
             + "\"avatar_url\":\"https://mockapi.io/avatars/1.png\"},"
-            + "{\"id\":2,\"login\":\"user\",\"password\":\"user\","
-            + "\"nickname\":\"viewer\",\"email\":\"viewer@cybersport-tracker.ru\","
+            + "{\"id\":2,\"login\":\"viewer@test.ru\",\"password\":\"viewer\","
+            + "\"nickname\":\"viewer\",\"email\":\"viewer@test.ru\","
             + "\"avatar_url\":\"https://mockapi.io/avatars/2.png\"}"
             + "]";
 

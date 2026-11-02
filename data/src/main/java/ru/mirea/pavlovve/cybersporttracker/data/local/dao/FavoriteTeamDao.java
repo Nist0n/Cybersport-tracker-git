@@ -1,5 +1,6 @@
 package ru.mirea.pavlovve.cybersporttracker.data.local.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -17,6 +18,9 @@ public interface FavoriteTeamDao {
 
     @Query("SELECT * FROM favorite_teams")
     List<FavoriteTeamEntity> getAll();
+
+    @Query("SELECT * FROM favorite_teams ORDER BY worldRank ASC")
+    LiveData<List<FavoriteTeamEntity>> observeAll();
 
     @Query("DELETE FROM favorite_teams WHERE id = :teamId")
     void deleteById(int teamId);

@@ -2,8 +2,8 @@ package ru.mirea.pavlovve.cybersporttracker.presentation;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.EditText;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -11,21 +11,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import ru.mirea.pavlovve.cybersporttracker.MainActivity;
 import ru.mirea.pavlovve.cybersporttracker.R;
-import ru.mirea.pavlovve.cybersporttracker.domain.models.User;
+import ru.mirea.pavlovve.cybersporttracker.presentation.login.LoginUiState;
+import ru.mirea.pavlovve.cybersporttracker.presentation.login.LoginViewModel;
+import ru.mirea.pavlovve.cybersporttracker.presentation.login.LoginViewModelFactory;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private AppContainer container;
-    private EditText loginInput;
-    private EditText passwordInput;
+    private LoginViewModel viewModel;
+    private TextInputEditText emailInput;
+    private TextInputEditText passwordInput;
+    private TextInputLayout emailLayout;
+    private TextInputLayout passwordLayout;
     private TextView statusView;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private MaterialButton signInButton;
+    private MaterialButton signUpButton;
+    private CircularProgressIndicator progressView;
+    private boolean navigated;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,79 +43,98 @@ public class LoginActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.loginRoot), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+        View root = findViewById(R.id.loginRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             return insets;
         });
 
-        container = new AppContainer(this);
-        loginInput = findViewById(R.id.editTextLogin);
+        AppContainer container = AppContainer.get(this);
+        viewModel = new ViewModelProvider(this, new LoginViewModelFactory(container))
+                .get(LoginViewModel.class);
+
+        emailInput = findViewById(R.id.editTextLogin);
         passwordInput = findViewById(R.id.editTextPassword);
+        emailLayout = findViewById(R.id.layoutEmail);
+        passwordLayout = findViewById(R.id.layoutPassword);
         statusView = findViewById(R.id.textViewLoginStatus);
+        signInButton = findViewById(R.id.buttonSignIn);
+        signUpButton = findViewById(R.id.buttonSignUp);
+        progressView = findViewById(R.id.progressLogin);
 
         if (container.isFirebaseNotConfigured()) {
             statusView.setText(R.string.login_mock_note);
+            statusView.setVisibility(View.VISIBLE);
         }
 
-        Button signInButton = findViewById(R.id.buttonSignIn);
-        signInButton.setOnClickListener(v -> signIn());
-        Button signUpButton = findViewById(R.id.buttonSignUp);
-        signUpButton.setOnClickListener(v -> signUp());
+        signInButton.setOnClickListener(v -> submit(false));
+        signUpButton.setOnClickListener(v -> submit(true));
+        findViewById(R.id.buttonSkip).setOnClickListener(v -> openMainScreen());
 
-        if (container.profile().execute() != null) {
+        passwordInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                submit(false);
+                return true;
+            }
+            return false;
+        });
+
+        viewModel.getState().observe(this, this::render);
+    }
+
+    private void submit(boolean registration) {
+        String email = emailInput.getText() == null ? "" : emailInput.getText().toString();
+        String password = passwordInput.getText() == null
+                ? ""
+                : passwordInput.getText().toString();
+        emailLayout.setError(null);
+        passwordLayout.setError(null);
+        if (registration) {
+            viewModel.signUp(email, password);
+        } else {
+            viewModel.signIn(email, password);
+        }
+    }
+
+    private void render(LoginUiState state) {
+        boolean loading = state.isLoading();
+        progressView.setVisibility(loading ? View.VISIBLE : View.GONE);
+        signInButton.setEnabled(!loading);
+        signUpButton.setEnabled(!loading);
+        signInButton.setText(loading
+                ? R.string.login_in_progress
+                : R.string.btn_sign_in);
+
+        if (state.getError() != LoginUiState.Error.NONE) {
+            statusView.setVisibility(View.VISIBLE);
+            statusView.setText(errorText(state.getError()));
+        }
+
+        if (state.getUser() != null && !navigated) {
             openMainScreen();
         }
     }
 
-    private void signIn() {
-        String login = loginInput.getText().toString().trim();
-        String password = passwordInput.getText().toString();
-        if (login.isEmpty() || password.isEmpty()) {
-            statusView.setText(R.string.login_empty_fields);
-            return;
-        }
-        statusView.setText(R.string.login_in_progress);
-        executor.execute(() -> {
-            User user = container.login().execute(login, password);
-            runOnUiThread(() -> {
-                if (user == null) {
-                    statusView.setText(R.string.login_error);
-                } else {
-                    openMainScreen();
-                }
-            });
-        });
-    }
-
-    private void signUp() {
-        String login = loginInput.getText().toString().trim();
-        String password = passwordInput.getText().toString();
-        if (login.isEmpty() || password.isEmpty()) {
-            statusView.setText(R.string.login_empty_fields);
-            return;
-        }
-        statusView.setText(R.string.login_in_progress);
-        executor.execute(() -> {
-            User user = container.register().execute(login, password);
-            runOnUiThread(() -> {
-                if (user == null) {
-                    statusView.setText(R.string.register_error);
-                } else {
-                    openMainScreen();
-                }
-            });
-        });
-    }
-
     private void openMainScreen() {
+        if (navigated) {
+            return;
+        }
+        navigated = true;
         startActivity(new Intent(this, MainActivity.class));
         finish();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        executor.shutdown();
+    private int errorText(LoginUiState.Error error) {
+        switch (error) {
+            case EMPTY_FIELDS:
+                return R.string.login_empty_fields;
+            case LOGIN_FAILED:
+                return R.string.login_error;
+            case REGISTER_FAILED:
+                return R.string.register_error;
+            default:
+                return R.string.login_mock_note;
+        }
     }
 }
