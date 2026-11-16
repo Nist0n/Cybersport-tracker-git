@@ -10,6 +10,7 @@ import ru.mirea.pavlovve.cybersporttracker.data.auth.AuthDataSource;
 import ru.mirea.pavlovve.cybersporttracker.data.auth.CompositeAuthDataSource;
 import ru.mirea.pavlovve.cybersporttracker.data.auth.FirebaseAuthDataSource;
 import ru.mirea.pavlovve.cybersporttracker.data.auth.MockAuthDataSource;
+import ru.mirea.pavlovve.cybersporttracker.data.auth.MockUserStore;
 import ru.mirea.pavlovve.cybersporttracker.data.local.AppDatabase;
 import ru.mirea.pavlovve.cybersporttracker.data.network.NetworkApi;
 import ru.mirea.pavlovve.cybersporttracker.data.repository.FavoritesRepositoryImpl;
@@ -51,9 +52,10 @@ public class AppContainer {
     private static volatile AppContainer instance;
 
     private final NetworkApi networkApi = new NetworkApi();
+    private final MockUserStore userStore = new MockUserStore();
     private final TfliteLogoDataSource logoDataSource = new TfliteLogoDataSource();
     private final AuthDataSource authDataSource = new CompositeAuthDataSource(
-            new FirebaseAuthDataSource(), new MockAuthDataSource(networkApi));
+            new FirebaseAuthDataSource(), new MockAuthDataSource(userStore));
 
     private final ClientStorage clientStorage;
     private final AppDatabase database;

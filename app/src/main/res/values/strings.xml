@@ -28,15 +28,19 @@
     <string name="teams_title">Команды</string>
     <string name="teams_search_hint">Поиск команды</string>
     <string name="filter_all">Все</string>
-    <string name="country_russia">Россия</string>
-    <string name="country_ukraine">Украина</string>
-    <string name="country_usa">США</string>
-    <string name="country_france">Франция</string>
+    <string name="filter_emea">Европа</string>
+    <string name="filter_korea">Корея</string>
+    <string name="filter_north_america">Северная Америка</string>
+    <string name="filter_china">Китай</string>
     <string name="teams_loading">Загрузка команд…</string>
     <string name="teams_total">Всего команд: %1$d</string>
     <string name="teams_found">Найдено команд: %1$d</string>
     <string name="teams_empty_title">Команды не найдены</string>
     <string name="teams_empty_subtitle">Попробуйте изменить запрос</string>
+    <string name="teams_error_title">Не удалось загрузить команды</string>
+    <string name="teams_error_subtitle">Проверьте подключение к интернету и повторите попытку</string>
+    <string name="teams_error_count">Нет соединения с сервером</string>
+    <string name="action_retry">Повторить</string>
     <string name="teams_guest_hint">Войдите, чтобы сохранять команды</string>
     <string name="teams_login_hint">Войдите, чтобы сохранять</string>
     <string name="teams_login_action">Войти</string>
@@ -53,10 +57,11 @@
     <string name="team_section_info">Информация</string>
     <string name="team_players_empty">Состав пока не указан</string>
     <string name="team_matches_empty">Ближайших матчей нет</string>
-    <string name="team_info_country">Страна</string>
+    <string name="team_info_country">Регион</string>
+    <string name="team_info_league">Лига</string>
     <string name="team_info_rank">Место в рейтинге</string>
     <string name="team_info_logo">Логотип</string>
-    <string name="team_info_logo_value">Локальный ресурс</string>
+    <string name="team_info_logo_value">Загружается из сети</string>
     <string name="team_not_found">Команда не найдена</string>
     <string name="button_back">Назад</string>
 

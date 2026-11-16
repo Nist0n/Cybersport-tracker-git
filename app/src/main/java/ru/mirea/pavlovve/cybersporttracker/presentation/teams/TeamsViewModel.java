@@ -1,5 +1,7 @@
 package ru.mirea.pavlovve.cybersporttracker.presentation.teams;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -23,9 +25,10 @@ import ru.mirea.pavlovve.cybersporttracker.domain.usecase.GetUserProfileUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.LogoutUseCase;
 import ru.mirea.pavlovve.cybersporttracker.domain.usecase.RemoveTeamFromFavoritesUseCase;
 import ru.mirea.pavlovve.cybersporttracker.presentation.common.SingleLiveEvent;
-import ru.mirea.pavlovve.cybersporttracker.presentation.common.TeamLogoResolver;
 
 public class TeamsViewModel extends ViewModel {
+
+    private static final String TAG = "TeamsViewModel";
 
     private final GetTeamsUseCase getTeamsUseCase;
     private final AddTeamToFavoritesUseCase addTeamToFavoritesUseCase;
@@ -41,6 +44,7 @@ public class TeamsViewModel extends ViewModel {
     private final LiveData<List<Team>> favoriteTeams;
 
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> error = new MutableLiveData<>(false);
     private final MutableLiveData<String> query = new MutableLiveData<>("");
     private final MutableLiveData<String> country = new MutableLiveData<>("");
     private final MediatorLiveData<TeamsUiState> state = new MediatorLiveData<>();
@@ -64,6 +68,7 @@ public class TeamsViewModel extends ViewModel {
 
         state.addSource(networkTeams, teams -> emitState());
         state.addSource(loading, isLoading -> emitState());
+        state.addSource(error, hasError -> emitState());
         state.addSource(query, value -> emitState());
         state.addSource(country, value -> emitState());
         state.addSource(favoriteTeams, teams -> {
@@ -130,13 +135,30 @@ public class TeamsViewModel extends ViewModel {
         });
     }
 
+    /** Повторная загрузка после ошибки сети. */
+    public void retry() {
+        if (Boolean.TRUE.equals(loading.getValue())) {
+            return;
+        }
+        loading.setValue(true);
+        error.setValue(false);
+        loadTeams();
+    }
+
     private void loadTeams() {
         executor.execute(() -> {
-            List<Team> loaded = getTeamsUseCase.execute();
-            networkTeams.postValue(loaded == null
-                    ? Collections.emptyList()
-                    : new ArrayList<>(loaded));
-            loading.postValue(false);
+            try {
+                List<Team> loaded = getTeamsUseCase.execute();
+                networkTeams.postValue(loaded == null
+                        ? Collections.emptyList()
+                        : new ArrayList<>(loaded));
+                error.postValue(false);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Не удалось загрузить команды", e);
+                error.postValue(true);
+            } finally {
+                loading.postValue(false);
+            }
         });
     }
 
@@ -146,6 +168,7 @@ public class TeamsViewModel extends ViewModel {
             all = Collections.emptyList();
         }
         boolean isLoading = Boolean.TRUE.equals(loading.getValue());
+        boolean hasError = Boolean.TRUE.equals(error.getValue());
         String currentQuery = query.getValue() == null ? "" : query.getValue();
         String currentCountry = country.getValue() == null ? "" : country.getValue();
 
@@ -159,7 +182,6 @@ public class TeamsViewModel extends ViewModel {
             }
             visible.add(new TeamListItem(
                     team,
-                    TeamLogoResolver.resolve(team),
                     user != null && favoriteIds.contains(team.getId()),
                     user != null
             ));
@@ -173,7 +195,8 @@ public class TeamsViewModel extends ViewModel {
                 visible.size(),
                 currentQuery,
                 currentCountry,
-                !isLoading && visible.isEmpty()
+                !isLoading && !hasError && visible.isEmpty(),
+                hasError
         ));
     }
 

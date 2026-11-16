@@ -9,14 +9,17 @@ import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
 public final class TeamDetailsUiState {
 
     private final boolean loading;
+    private final boolean error;
     private final Team team;
     private final List<Match> matches;
     private final boolean favorite;
     private final boolean authorized;
 
-    public TeamDetailsUiState(boolean loading, Team team, List<Match> matches,
-                              boolean favorite, boolean authorized) {
+    public TeamDetailsUiState(boolean loading, boolean error, Team team,
+                              List<Match> matches, boolean favorite,
+                              boolean authorized) {
         this.loading = loading;
+        this.error = error;
         this.team = team;
         this.matches = Collections.unmodifiableList(matches);
         this.favorite = favorite;
@@ -25,6 +28,10 @@ public final class TeamDetailsUiState {
 
     public boolean isLoading() {
         return loading;
+    }
+
+    public boolean hasError() {
+        return error;
     }
 
     public Team getTeam() {
@@ -44,6 +51,6 @@ public final class TeamDetailsUiState {
     }
 
     public boolean isNotFound() {
-        return !loading && team == null;
+        return !loading && !error && team == null;
     }
 }

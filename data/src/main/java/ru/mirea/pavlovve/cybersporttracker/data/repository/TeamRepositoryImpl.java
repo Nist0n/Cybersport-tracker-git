@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import ru.mirea.pavlovve.cybersporttracker.data.dto.TeamDto;
 import ru.mirea.pavlovve.cybersporttracker.data.mapper.TeamMapper;
 import ru.mirea.pavlovve.cybersporttracker.data.network.NetworkApi;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
@@ -25,7 +24,12 @@ public class TeamRepositoryImpl implements TeamRepository {
 
     @Override
     public Team getTeamById(int id) {
-        return TeamMapper.toDomain(networkApi.getTeamById(id));
+        for (Team team : getTeams()) {
+            if (team.getId() == id) {
+                return team;
+            }
+        }
+        return null;
     }
 
     @Override

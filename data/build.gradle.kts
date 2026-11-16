@@ -30,6 +30,10 @@ dependencies {
 
     implementation(libs.gson)
 
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.okhttp.logging)
+
     api(libs.room.runtime)
     annotationProcessor(libs.room.compiler)
 

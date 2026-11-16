@@ -14,10 +14,11 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.Locale;
+import com.squareup.picasso.Picasso;
 
 import ru.mirea.pavlovve.cybersporttracker.R;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
+import ru.mirea.pavlovve.cybersporttracker.presentation.common.RegionNames;
 
 
 public class TeamsAdapter extends ListAdapter<TeamListItem, TeamsAdapter.TeamViewHolder> {
@@ -84,11 +85,10 @@ public class TeamsAdapter extends ListAdapter<TeamListItem, TeamsAdapter.TeamVie
 
         void bind(TeamListItem item) {
             Team team = item.getTeam();
-            logoView.setImageResource(item.getLogoResId());
+            bindLogo(team);
             tagView.setText(team.getTag());
             nameView.setText(team.getName());
-            metaView.setText(String.format(Locale.getDefault(), "%s · место %d",
-                    team.getCountry(), team.getWorldRank()));
+            metaView.setText(buildMeta(team));
 
             favoriteButton.setImageResource(item.isFavorite()
                     ? R.drawable.ic_favorite
@@ -106,6 +106,33 @@ public class TeamsAdapter extends ListAdapter<TeamListItem, TeamsAdapter.TeamVie
 
             favoriteButton.setOnClickListener(v -> listener.onFavoriteClick(team));
             itemView.setOnClickListener(v -> listener.onTeamClick(team));
+        }
+
+        /** Логотип приходит из сети: Picasso загружает его асинхронно и кэширует. */
+        private void bindLogo(Team team) {
+            String logoUrl = team.getLogoUrl();
+            if (logoUrl == null || logoUrl.isEmpty()) {
+                Picasso.get().cancelRequest(logoView);
+                logoView.setImageResource(R.drawable.logo_team_placeholder);
+                return;
+            }
+            Picasso.get()
+                    .load(logoUrl)
+                    .placeholder(R.drawable.logo_team_placeholder)
+                    .error(R.drawable.logo_team_placeholder)
+                    .resize(96, 96)
+                    .onlyScaleDown()
+                    .centerInside()
+                    .into(logoView);
+        }
+
+        private String buildMeta(Team team) {
+            String region = RegionNames.display(team.getCountry());
+            String league = team.getLeague();
+            if (league == null || league.isEmpty()) {
+                return region;
+            }
+            return region + " · " + league;
         }
     }
 }

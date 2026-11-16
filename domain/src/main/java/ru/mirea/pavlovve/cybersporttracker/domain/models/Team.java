@@ -8,16 +8,18 @@ public class Team {
     private final String tag;
     private final String name;
     private final String country;
+    private final String league;
     private final String logoUrl;
     private final int worldRank;
     private final List<String> players;
 
-    public Team(int id, String tag, String name, String country,
+    public Team(int id, String tag, String name, String country, String league,
                 String logoUrl, int worldRank, List<String> players) {
         this.id = id;
         this.tag = tag;
         this.name = name;
         this.country = country;
+        this.league = league;
         this.logoUrl = logoUrl;
         this.worldRank = worldRank;
         this.players = players == null
@@ -41,6 +43,10 @@ public class Team {
         return country;
     }
 
+    public String getLeague() {
+        return league;
+    }
+
     public String getLogoUrl() {
         return logoUrl;
     }
@@ -54,7 +60,9 @@ public class Team {
     }
 
     public String getShortInfo() {
-        return tag + " — " + name + " (" + country + "), место в рейтинге: " + worldRank;
+        String leagueInfo = league == null || league.isEmpty() ? "" : " [" + league + "]";
+        return tag + " — " + name + " (" + country + ")" + leagueInfo
+                + ", место в рейтинге: " + worldRank;
     }
 
     @Override

@@ -17,11 +17,16 @@ public class TournamentRepositoryImpl implements TournamentRepository {
 
     @Override
     public List<Tournament> getTournaments() {
-        return TournamentMapper.toDomainList(networkApi.getTournaments());
+        return TournamentMapper.toDomainList(networkApi.getLeagues());
     }
 
     @Override
     public Tournament getTournamentById(int id) {
-        return TournamentMapper.toDomain(networkApi.getTournamentById(id));
+        for (Tournament tournament : getTournaments()) {
+            if (tournament.getId() == id) {
+                return tournament;
+            }
+        }
+        return null;
     }
 }

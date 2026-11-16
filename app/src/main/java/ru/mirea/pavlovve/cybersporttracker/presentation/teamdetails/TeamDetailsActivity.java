@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 import java.util.Locale;
@@ -29,7 +30,7 @@ import ru.mirea.pavlovve.cybersporttracker.domain.models.Match;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
 import ru.mirea.pavlovve.cybersporttracker.presentation.AppContainer;
 import ru.mirea.pavlovve.cybersporttracker.presentation.LoginActivity;
-import ru.mirea.pavlovve.cybersporttracker.presentation.common.TeamLogoResolver;
+import ru.mirea.pavlovve.cybersporttracker.presentation.common.RegionNames;
 
 public class TeamDetailsActivity extends AppCompatActivity {
 
@@ -37,6 +38,8 @@ public class TeamDetailsActivity extends AppCompatActivity {
 
     private TeamDetailsViewModel viewModel;
     private ScrollViewState state;
+    private View root;
+    private boolean errorShown;
 
     private View contentView;
     private CircularProgressIndicator progressView;
@@ -48,6 +51,7 @@ public class TeamDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_team_details);
 
         View root = findViewById(R.id.detailsRoot);
+        this.root = root;
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
             Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
@@ -84,7 +88,20 @@ public class TeamDetailsActivity extends AppCompatActivity {
 
     private void render(TeamDetailsUiState uiState) {
         progressView.setVisibility(uiState.isLoading() ? View.VISIBLE : View.GONE);
-        contentView.setVisibility(uiState.isLoading() ? View.INVISIBLE : View.VISIBLE);
+        contentView.setVisibility(uiState.isLoading() || uiState.hasError()
+                ? View.INVISIBLE
+                : View.VISIBLE);
+
+        if (uiState.hasError()) {
+            if (!errorShown) {
+                errorShown = true;
+                Snackbar.make(root, R.string.teams_error_title, Snackbar.LENGTH_INDEFINITE)
+                        .setAction(R.string.action_retry, v -> viewModel.retry())
+                        .show();
+            }
+            return;
+        }
+        errorShown = false;
 
         if (uiState.isNotFound()) {
             finish();
@@ -97,18 +114,43 @@ public class TeamDetailsActivity extends AppCompatActivity {
 
         state.authorized = uiState.isAuthorized();
 
-        ((ImageView) findViewById(R.id.imageDetailLogo))
-                .setImageResource(TeamLogoResolver.resolve(team));
+        bindLogo(team);
         ((TextView) findViewById(R.id.textDetailTag)).setText(team.getTag());
         ((TextView) findViewById(R.id.textDetailName)).setText(team.getName());
-        ((TextView) findViewById(R.id.textDetailMeta)).setText(
-                String.format(Locale.getDefault(), "%s · место в рейтинге %d",
-                        team.getCountry(), team.getWorldRank()));
+        ((TextView) findViewById(R.id.textDetailMeta)).setText(buildMeta(team));
 
         bindPlayers(team);
         bindMatches(uiState.getMatches());
         bindInfo(team);
         bindFavoriteButton(uiState);
+    }
+
+    /** Логотип команды загружается Picasso из сети с заглушкой и обработкой ошибки. */
+    private void bindLogo(Team team) {
+        ImageView logoView = findViewById(R.id.imageDetailLogo);
+        String logoUrl = team.getLogoUrl();
+        if (logoUrl == null || logoUrl.isEmpty()) {
+            Picasso.get().cancelRequest(logoView);
+            logoView.setImageResource(R.drawable.logo_team_placeholder);
+            return;
+        }
+        Picasso.get()
+                .load(logoUrl)
+                .placeholder(R.drawable.logo_team_placeholder)
+                .error(R.drawable.logo_team_placeholder)
+                .resize(192, 192)
+                .onlyScaleDown()
+                .centerInside()
+                .into(logoView);
+    }
+
+    private String buildMeta(Team team) {
+        String region = RegionNames.display(team.getCountry());
+        String league = team.getLeague();
+        if (league == null || league.isEmpty()) {
+            return region;
+        }
+        return region + " · " + league;
     }
 
     private void bindPlayers(Team team) {
@@ -155,9 +197,12 @@ public class TeamDetailsActivity extends AppCompatActivity {
     private void bindInfo(Team team) {
         LinearLayout container = findViewById(R.id.infoContainer);
         container.removeAllViews();
-        addInfoRow(container, R.drawable.ic_flag, R.string.team_info_country, team.getCountry());
-        addInfoRow(container, R.drawable.ic_rank, R.string.team_info_rank,
-                String.valueOf(team.getWorldRank()));
+        addInfoRow(container, R.drawable.ic_flag, R.string.team_info_country,
+                RegionNames.display(team.getCountry()));
+        addInfoRow(container, R.drawable.ic_rank, R.string.team_info_league,
+                team.getLeague() == null || team.getLeague().isEmpty()
+                        ? "—"
+                        : team.getLeague());
         addInfoRow(container, R.drawable.ic_image, R.string.team_info_logo,
                 getString(R.string.team_info_logo_value));
     }

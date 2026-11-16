@@ -99,32 +99,32 @@
                 android:text="@string/filter_all" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipRussia"
+                android:id="@+id/chipEmea"
                 style="@style/Widget.Cybersport.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/country_russia" />
+                android:text="@string/filter_emea" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipUkraine"
+                android:id="@+id/chipKorea"
                 style="@style/Widget.Cybersport.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/country_ukraine" />
+                android:text="@string/filter_korea" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipUsa"
+                android:id="@+id/chipNorthAmerica"
                 style="@style/Widget.Cybersport.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/country_usa" />
+                android:text="@string/filter_north_america" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipFrance"
+                android:id="@+id/chipChina"
                 style="@style/Widget.Cybersport.Chip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/country_france" />
+                android:text="@string/filter_china" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
@@ -251,6 +251,7 @@
                 app:tint="@color/text_secondary" />
 
             <TextView
+                android:id="@+id/textEmptyTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -260,12 +261,26 @@
                 android:textSize="18sp" />
 
             <TextView
+                android:id="@+id/textEmptySubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:gravity="center"
                 android:text="@string/teams_empty_subtitle"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonRetry"
+                style="@style/Widget.Cybersport.Button.Outlined"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/action_retry"
+                android:visibility="gone"
+                app:icon="@drawable/ic_refresh"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp" />
         </LinearLayout>
     </FrameLayout>
 </LinearLayout>

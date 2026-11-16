@@ -45,6 +45,7 @@ public final class FavoriteTeamEntityMapper {
                 entity.getTag(),
                 entity.getName(),
                 entity.getCountry(),
+                "",
                 entity.getLogoUrl(),
                 entity.getWorldRank(),
                 players

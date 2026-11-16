@@ -15,10 +15,11 @@ public final class TeamsUiState {
     private final String query;
     private final String country;
     private final boolean empty;
+    private final boolean error;
 
     public TeamsUiState(boolean loading, User user, List<TeamListItem> teams,
                         int totalCount, int foundCount, String query,
-                        String country, boolean empty) {
+                        String country, boolean empty, boolean error) {
         this.loading = loading;
         this.user = user;
         this.teams = Collections.unmodifiableList(teams);
@@ -27,6 +28,7 @@ public final class TeamsUiState {
         this.query = query;
         this.country = country;
         this.empty = empty;
+        this.error = error;
     }
 
     public boolean isLoading() {
@@ -63,6 +65,10 @@ public final class TeamsUiState {
 
     public boolean isEmpty() {
         return empty;
+    }
+
+    public boolean hasError() {
+        return error;
     }
 
     public boolean hasFilter() {

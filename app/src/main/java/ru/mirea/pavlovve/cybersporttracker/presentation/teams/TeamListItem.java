@@ -1,7 +1,5 @@
 package ru.mirea.pavlovve.cybersporttracker.presentation.teams;
 
-import androidx.annotation.DrawableRes;
-
 import java.util.Objects;
 
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
@@ -9,26 +7,17 @@ import ru.mirea.pavlovve.cybersporttracker.domain.models.Team;
 public final class TeamListItem {
 
     private final Team team;
-    @DrawableRes
-    private final int logoResId;
     private final boolean favorite;
     private final boolean authorized;
 
-    public TeamListItem(Team team, @DrawableRes int logoResId,
-                        boolean favorite, boolean authorized) {
+    public TeamListItem(Team team, boolean favorite, boolean authorized) {
         this.team = team;
-        this.logoResId = logoResId;
         this.favorite = favorite;
         this.authorized = authorized;
     }
 
     public Team getTeam() {
         return team;
-    }
-
-    @DrawableRes
-    public int getLogoResId() {
-        return logoResId;
     }
 
     public boolean isFavorite() {
@@ -48,14 +37,16 @@ public final class TeamListItem {
             return false;
         }
         TeamListItem that = (TeamListItem) o;
-        return logoResId == that.logoResId
-                && favorite == that.favorite
+        return favorite == that.favorite
                 && authorized == that.authorized
-                && team.getId() == that.team.getId();
+                && team.getId() == that.team.getId()
+                && Objects.equals(team.getName(), that.team.getName())
+                && Objects.equals(team.getLogoUrl(), that.team.getLogoUrl());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(team.getId(), logoResId, favorite, authorized);
+        return Objects.hash(team.getId(), team.getName(), team.getLogoUrl(),
+                favorite, authorized);
     }
 }

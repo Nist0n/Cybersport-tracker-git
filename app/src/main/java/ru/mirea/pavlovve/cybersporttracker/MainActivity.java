@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity implements TeamsAdapter.List
     private RecyclerView recyclerView;
     private View loadingView;
     private View emptyView;
+    private TextView emptyTitle;
+    private TextView emptySubtitle;
+    private View retryButton;
     private TextView countView;
     private MaterialCardView guestCard;
     private EditText searchInput;
@@ -65,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements TeamsAdapter.List
         recyclerView = findViewById(R.id.recyclerTeams);
         loadingView = findViewById(R.id.loadingView);
         emptyView = findViewById(R.id.emptyView);
+        emptyTitle = findViewById(R.id.textEmptyTitle);
+        emptySubtitle = findViewById(R.id.textEmptySubtitle);
+        retryButton = findViewById(R.id.buttonRetry);
         countView = findViewById(R.id.textTeamsCount);
         guestCard = findViewById(R.id.cardGuestHint);
         searchInput = findViewById(R.id.editSearch);
@@ -76,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements TeamsAdapter.List
 
         findViewById(R.id.buttonProfile).setOnClickListener(v -> showProfile());
         findViewById(R.id.buttonGuestLogin).setOnClickListener(v -> openLogin());
+        retryButton.setOnClickListener(v -> viewModel.retry());
 
         setupSearch();
         setupFilters();
@@ -114,14 +121,14 @@ public class MainActivity extends AppCompatActivity implements TeamsAdapter.List
                 return;
             }
             int checkedId = checkedIds.get(0);
-            if (checkedId == R.id.chipRussia) {
-                viewModel.setCountry(getString(R.string.country_russia));
-            } else if (checkedId == R.id.chipUkraine) {
-                viewModel.setCountry(getString(R.string.country_ukraine));
-            } else if (checkedId == R.id.chipUsa) {
-                viewModel.setCountry(getString(R.string.country_usa));
-            } else if (checkedId == R.id.chipFrance) {
-                viewModel.setCountry(getString(R.string.country_france));
+            if (checkedId == R.id.chipEmea) {
+                viewModel.setCountry("EMEA");
+            } else if (checkedId == R.id.chipKorea) {
+                viewModel.setCountry("KOREA");
+            } else if (checkedId == R.id.chipNorthAmerica) {
+                viewModel.setCountry("NORTH AMERICA");
+            } else if (checkedId == R.id.chipChina) {
+                viewModel.setCountry("CHINA");
             } else {
                 viewModel.setCountry("");
             }
@@ -132,14 +139,29 @@ public class MainActivity extends AppCompatActivity implements TeamsAdapter.List
         currentUser = state.getUser();
         adapter.submitList(state.getTeams());
 
-        boolean showList = !state.isLoading() && !state.isEmpty();
+        boolean hasError = state.hasError();
+        boolean showList = !state.isLoading() && !hasError && !state.isEmpty();
         recyclerView.setVisibility(showList ? View.VISIBLE : View.INVISIBLE);
         loadingView.setVisibility(state.isLoading() ? View.VISIBLE : View.GONE);
-        emptyView.setVisibility(state.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(!state.isLoading() && (state.isEmpty() || hasError)
+                ? View.VISIBLE
+                : View.GONE);
         guestCard.setVisibility(state.isAuthorized() ? View.GONE : View.VISIBLE);
+
+        if (hasError) {
+            emptyTitle.setText(R.string.teams_error_title);
+            emptySubtitle.setText(R.string.teams_error_subtitle);
+            retryButton.setVisibility(View.VISIBLE);
+        } else {
+            emptyTitle.setText(R.string.teams_empty_title);
+            emptySubtitle.setText(R.string.teams_empty_subtitle);
+            retryButton.setVisibility(View.GONE);
+        }
 
         if (state.isLoading()) {
             countView.setText(R.string.teams_loading);
+        } else if (hasError) {
+            countView.setText(R.string.teams_error_count);
         } else if (state.hasFilter()) {
             countView.setText(getString(R.string.teams_found, state.getFoundCount()));
         } else {

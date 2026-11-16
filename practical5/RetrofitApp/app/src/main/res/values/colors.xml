@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="graphite">#0D1117</color>
+    <color name="surface">#161B22</color>
+    <color name="surface_elevated">#1E242E</color>
+    <color name="border">#262D38</color>
+
+    <color name="text_primary">#F2F5F9</color>
+    <color name="text_secondary">#98A2B3</color>
+
+    <color name="primary">#3E7BFA</color>
+    <color name="secondary">#7C6CFF</color>
+    <color name="error">#E5484D</color>
+</resources>

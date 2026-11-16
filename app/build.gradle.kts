@@ -53,4 +53,5 @@ dependencies {
     implementation(libs.lifecycle.livedata)
     implementation(libs.recyclerview)
     implementation(libs.cardview)
+    implementation(libs.picasso)
 }

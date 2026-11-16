@@ -1,9 +1,11 @@
 package ru.mirea.pavlovve.cybersporttracker.data.repository;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import ru.mirea.pavlovve.cybersporttracker.data.dto.MatchDto;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolEventDto;
 import ru.mirea.pavlovve.cybersporttracker.data.mapper.MatchMapper;
 import ru.mirea.pavlovve.cybersporttracker.data.network.NetworkApi;
 import ru.mirea.pavlovve.cybersporttracker.domain.models.Match;
@@ -23,9 +25,15 @@ public class MatchRepositoryImpl implements MatchRepository {
 
     @Override
     public List<Match> getMatches() {
+        Map<String, Team> teamsByKey = new HashMap<>();
+        for (Team team : teamRepository.getTeams()) {
+            teamsByKey.put(MatchMapper.key(team.getName()), team);
+            teamsByKey.put(MatchMapper.key(team.getTag()), team);
+        }
+
         List<Match> result = new ArrayList<>();
-        for (MatchDto dto : networkApi.getMatches()) {
-            Match match = toDomain(dto);
+        for (LolEventDto event : networkApi.getSchedule()) {
+            Match match = MatchMapper.toDomain(event, teamsByKey);
             if (match != null) {
                 result.add(match);
             }
@@ -35,15 +43,11 @@ public class MatchRepositoryImpl implements MatchRepository {
 
     @Override
     public Match getMatchById(int id) {
-        return toDomain(networkApi.getMatchById(id));
-    }
-
-    private Match toDomain(MatchDto dto) {
-        if (dto == null) {
-            return null;
+        for (Match match : getMatches()) {
+            if (match.getId() == id) {
+                return match;
+            }
         }
-        Team homeTeam = teamRepository.getTeamById(dto.home_team_id);
-        Team awayTeam = teamRepository.getTeamById(dto.away_team_id);
-        return MatchMapper.toDomain(dto, homeTeam, awayTeam);
+        return null;
     }
 }

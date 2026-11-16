@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Retrofit + Picasso</string>
+
+    <string name="header_title">Практика 5 · Retrofit</string>
+    <string name="header_subtitle">JSONPlaceholder · PATCH по CheckBox · галерея Picasso</string>
+
+    <string name="section_todos">Задачи (GET /todos)</string>
+    <string name="section_images">Изображения (Picasso)</string>
+
+    <string name="retry">Повторить</string>
+    <string name="todos_loaded">Загружено задач: %1$d</string>
+    <string name="http_error">Сервер вернул код %1$d</string>
+    <string name="todo_saved">Задача #%1$d обновлена (PATCH)</string>
+    <string name="todo_save_failed">Не удалось сохранить: %1$s</string>
+    <string name="todo_subtitle">ID %1$d · пользователь %2$d</string>
+
+    <string name="size_label">Размер</string>
+    <string name="size_value">%1$d dp</string>
+    <string name="rotation_label">Поворот</string>
+    <string name="rotation_value">%1$d°</string>
+    <string name="crop">Обрезать по центру</string>
+    <string name="reload_images">Обновить</string>
+    <string name="images_reloaded">Загружены новые изображения</string>
+</resources>

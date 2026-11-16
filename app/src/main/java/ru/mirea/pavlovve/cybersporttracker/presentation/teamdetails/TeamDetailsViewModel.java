@@ -1,5 +1,7 @@
 package ru.mirea.pavlovve.cybersporttracker.presentation.teamdetails;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -26,6 +28,8 @@ import ru.mirea.pavlovve.cybersporttracker.presentation.common.SingleLiveEvent;
 
 public class TeamDetailsViewModel extends ViewModel {
 
+    private static final String TAG = "TeamDetailsViewModel";
+
     private final int teamId;
     private final GetTeamByIdUseCase getTeamByIdUseCase;
     private final GetMatchesUseCase getMatchesUseCase;
@@ -40,6 +44,7 @@ public class TeamDetailsViewModel extends ViewModel {
     private final MutableLiveData<List<Match>> matches =
             new MutableLiveData<>(Collections.emptyList());
     private final MutableLiveData<Boolean> loading = new MutableLiveData<>(true);
+    private final MutableLiveData<Boolean> error = new MutableLiveData<>(false);
     private final MediatorLiveData<TeamDetailsUiState> state = new MediatorLiveData<>();
     private final SingleLiveEvent<Integer> message = new SingleLiveEvent<>();
 
@@ -63,6 +68,7 @@ public class TeamDetailsViewModel extends ViewModel {
         state.addSource(team, value -> emitState());
         state.addSource(matches, value -> emitState());
         state.addSource(loading, value -> emitState());
+        state.addSource(error, value -> emitState());
         state.addSource(favoriteTeams, teams -> {
             Set<Integer> ids = new HashSet<>();
             if (teams != null) {
@@ -103,31 +109,49 @@ public class TeamDetailsViewModel extends ViewModel {
         });
     }
 
+    /** Повторная загрузка карточки после ошибки сети. */
+    public void retry() {
+        if (Boolean.TRUE.equals(loading.getValue())) {
+            return;
+        }
+        loading.setValue(true);
+        error.setValue(false);
+        load();
+    }
+
     private void load() {
         executor.execute(() -> {
-            Team loaded = getTeamByIdUseCase.execute(teamId);
-            team.postValue(loaded);
+            try {
+                Team loaded = getTeamByIdUseCase.execute(teamId);
+                team.postValue(loaded);
 
-            List<Match> teamMatches = new ArrayList<>();
-            if (loaded != null) {
-                List<Match> all = getMatchesUseCase.execute();
-                if (all != null) {
-                    for (Match match : all) {
-                        if (match.getHomeTeam().getId() == loaded.getId()
-                                || match.getAwayTeam().getId() == loaded.getId()) {
-                            teamMatches.add(match);
+                List<Match> teamMatches = new ArrayList<>();
+                if (loaded != null) {
+                    List<Match> all = getMatchesUseCase.execute();
+                    if (all != null) {
+                        for (Match match : all) {
+                            if (match.getHomeTeam().getId() == loaded.getId()
+                                    || match.getAwayTeam().getId() == loaded.getId()) {
+                                teamMatches.add(match);
+                            }
                         }
                     }
                 }
+                matches.postValue(teamMatches);
+                error.postValue(false);
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Не удалось загрузить карточку команды", e);
+                error.postValue(true);
+            } finally {
+                loading.postValue(false);
             }
-            matches.postValue(teamMatches);
-            loading.postValue(false);
         });
     }
 
     private void emitState() {
         Team current = team.getValue();
         boolean isLoading = Boolean.TRUE.equals(loading.getValue());
+        boolean hasError = Boolean.TRUE.equals(error.getValue());
         List<Match> currentMatches = matches.getValue();
         if (currentMatches == null) {
             currentMatches = Collections.emptyList();
@@ -137,6 +161,7 @@ public class TeamDetailsViewModel extends ViewModel {
                 && favoriteIds.contains(current.getId());
         state.setValue(new TeamDetailsUiState(
                 isLoading,
+                hasError,
                 current,
                 currentMatches,
                 favorite,

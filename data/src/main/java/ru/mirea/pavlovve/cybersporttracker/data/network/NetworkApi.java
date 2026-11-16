@@ -1,185 +1,135 @@
 package ru.mirea.pavlovve.cybersporttracker.data.network;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import ru.mirea.pavlovve.cybersporttracker.data.dto.MatchDto;
-import ru.mirea.pavlovve.cybersporttracker.data.dto.TeamDto;
-import ru.mirea.pavlovve.cybersporttracker.data.dto.TournamentDto;
-import ru.mirea.pavlovve.cybersporttracker.data.dto.UserDto;
+import retrofit2.Call;
+import retrofit2.Response;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolEventDto;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolLeagueDto;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolLeaguesResponse;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolScheduleResponse;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolTeamDto;
+import ru.mirea.pavlovve.cybersporttracker.data.dto.LolTeamsResponse;
 
+/**
+ * Фасад над Retrofit-интерфейсом.
+ *
+ * <p>Репозитории вызывают обычные Java-методы и получают готовые списки DTO.
+ * Внутри выполняется синхронный {@code Call.execute()} — поэтому методы
+ * обязаны вызываться из фонового потока (в приложении это ExecutorService
+ * внутри ViewModel). Все сетевые ошибки приводятся к {@link NetworkException}.</p>
+ *
+ * <p>Ответы кэшируются в памяти: список команд весит около 1.5 МБ, и повторно
+ * скачивать его при открытии карточки команды не нужно.</p>
+ */
 public class NetworkApi {
 
-    public static final String BASE_URL = "https://mockapi.io/api/v1/cybersport-tracker";
+    private final LolEsportsApi api;
 
-    private static final String TEAMS_JSON = "["
-            + "{\"id\":1,\"tag\":\"NAVI\",\"name\":\"Natus Vincere\",\"country\":\"Украина\","
-            + "\"logo_url\":\"https://mockapi.io/logos/navi.png\",\"world_rank\":1,"
-            + "\"players\":[\"s1mple\",\"b1t\",\"jL\",\"Aleksib\",\"iM\"]},"
-            + "{\"id\":2,\"tag\":\"Spirit\",\"name\":\"Team Spirit\",\"country\":\"Россия\","
-            + "\"logo_url\":\"https://mockapi.io/logos/spirit.png\",\"world_rank\":2,"
-            + "\"players\":[\"donk\",\"sh1ro\",\"chopper\",\"magixx\",\"zont1x\"]},"
-            + "{\"id\":3,\"tag\":\"FaZe\",\"name\":\"FaZe Clan\",\"country\":\"США\","
-            + "\"logo_url\":\"https://mockapi.io/logos/faze.png\",\"world_rank\":4,"
-            + "\"players\":[\"rain\",\"karrigan\",\"broky\",\"frozen\",\"EliGE\"]},"
-            + "{\"id\":4,\"tag\":\"G2\",\"name\":\"G2 Esports\",\"country\":\"Европа\","
-            + "\"logo_url\":\"https://mockapi.io/logos/g2.png\",\"world_rank\":6,"
-            + "\"players\":[\"huNter-\",\"malbsMd\",\"m0NESY\",\"Snax\",\"frozen\"]},"
-            + "{\"id\":5,\"tag\":\"Vitality\",\"name\":\"Team Vitality\",\"country\":\"Франция\","
-            + "\"logo_url\":\"https://mockapi.io/logos/vitality.png\",\"world_rank\":3,"
-            + "\"players\":[\"ZywOo\",\"apEX\",\"flameZ\",\"ropz\",\"Spinx\"]}"
-            + "]";
-
-    private static final String TOURNAMENTS_JSON = "["
-            + "{\"id\":1,\"name\":\"IEM Katowice 2026\",\"game\":\"CS2\","
-            + "\"location\":\"Катовице, Польша\",\"start_date\":\"2026-02-02\","
-            + "\"prize_pool\":\"$1,000,000\",\"status\":\"UPCOMING\"},"
-            + "{\"id\":2,\"name\":\"PGL Major 2026\",\"game\":\"CS2\","
-            + "\"location\":\"Стокгольм, Швеция\",\"start_date\":\"2026-05-10\","
-            + "\"prize_pool\":\"$1,250,000\",\"status\":\"UPCOMING\"},"
-            + "{\"id\":3,\"name\":\"The International 2026\",\"game\":\"Dota 2\","
-            + "\"location\":\"Копенгаген, Дания\",\"start_date\":\"2026-08-15\","
-            + "\"prize_pool\":\"$2,500,000\",\"status\":\"ANNOUNCED\"}"
-            + "]";
-
-    private static final String MATCHES_JSON = "["
-            + "{\"id\":1,\"tournament_name\":\"IEM Katowice 2026\",\"home_team_id\":1,"
-            + "\"away_team_id\":2,\"home_score\":0,\"away_score\":0,"
-            + "\"start_time\":\"2026-02-03 18:00\",\"status\":\"SCHEDULED\"},"
-            + "{\"id\":2,\"tournament_name\":\"IEM Katowice 2026\",\"home_team_id\":3,"
-            + "\"away_team_id\":4,\"home_score\":0,\"away_score\":0,"
-            + "\"start_time\":\"2026-02-03 21:00\",\"status\":\"SCHEDULED\"},"
-            + "{\"id\":3,\"tournament_name\":\"PGL Major 2026\",\"home_team_id\":5,"
-            + "\"away_team_id\":1,\"home_score\":13,\"away_score\":11,"
-            + "\"start_time\":\"2026-05-11 20:00\",\"status\":\"FINISHED\"},"
-            + "{\"id\":4,\"tournament_name\":\"PGL Major 2026\",\"home_team_id\":2,"
-            + "\"away_team_id\":3,\"home_score\":16,\"away_score\":14,"
-            + "\"start_time\":\"2026-05-11 23:00\",\"status\":\"FINISHED\"},"
-            + "{\"id\":5,\"tournament_name\":\"PGL Major 2026\",\"home_team_id\":1,"
-            + "\"away_team_id\":5,\"home_score\":7,\"away_score\":5,"
-            + "\"start_time\":\"2026-05-12 19:00\",\"status\":\"LIVE\"}"
-            + "]";
-
-    private static final String USERS_JSON = "["
-            + "{\"id\":1,\"login\":\"admin@test.ru\",\"password\":\"123456\","
-            + "\"nickname\":\"CyberTracker\",\"email\":\"admin@test.ru\","
-            + "\"avatar_url\":\"https://mockapi.io/avatars/1.png\"},"
-            + "{\"id\":2,\"login\":\"viewer@test.ru\",\"password\":\"viewer\","
-            + "\"nickname\":\"viewer\",\"email\":\"viewer@test.ru\","
-            + "\"avatar_url\":\"https://mockapi.io/avatars/2.png\"}"
-            + "]";
-
-    private final Gson gson = new Gson();
-    private final List<UserDto> users = new ArrayList<>();
-    private int userIdSequence = 100;
-
-    private List<TeamDto> teamsCache;
-    private List<TournamentDto> tournamentsCache;
-    private List<MatchDto> matchesCache;
+    private volatile List<LolTeamDto> teamsCache;
+    private volatile List<LolLeagueDto> leaguesCache;
+    private volatile List<LolEventDto> scheduleCache;
 
     public NetworkApi() {
-        List<UserDto> loaded = parse(USERS_JSON, new TypeToken<List<UserDto>>() {
-        }.getType());
-        if (loaded != null) {
-            users.addAll(loaded);
-            userIdSequence = loaded.size() + 1;
-        }
+        this(ApiClient.api());
     }
 
-    public String getBaseUrl() {
-        return BASE_URL;
+    public NetworkApi(LolEsportsApi api) {
+        this.api = api;
     }
 
-    public List<TeamDto> getTeams() {
-        if (teamsCache == null) {
-            List<TeamDto> parsed = parse(TEAMS_JSON, new TypeToken<List<TeamDto>>() {
-            }.getType());
-            teamsCache = parsed == null ? new ArrayList<TeamDto>() : parsed;
-        }
-        return teamsCache;
-    }
-
-    public TeamDto getTeamById(int id) {
-        for (TeamDto dto : getTeams()) {
-            if (dto.id == id) {
-                return dto;
+    public List<LolTeamDto> getTeams() {
+        List<LolTeamDto> cached = teamsCache;
+        if (cached == null) {
+            synchronized (this) {
+                cached = teamsCache;
+                if (cached == null) {
+                    LolTeamsResponse response = execute(
+                            api.getTeams(ApiConfig.LANGUAGE), "getTeams");
+                    List<LolTeamDto> teams = response.data == null
+                            ? null
+                            : response.data.teams;
+                    cached = teams == null
+                            ? Collections.<LolTeamDto>emptyList()
+                            : Collections.unmodifiableList(new ArrayList<>(teams));
+                    teamsCache = cached;
+                }
             }
         }
-        return null;
+        return cached;
     }
 
-    public List<TournamentDto> getTournaments() {
-        if (tournamentsCache == null) {
-            List<TournamentDto> parsed = parse(TOURNAMENTS_JSON,
-                    new TypeToken<List<TournamentDto>>() {
-                    }.getType());
-            tournamentsCache = parsed == null ? new ArrayList<TournamentDto>() : parsed;
-        }
-        return tournamentsCache;
-    }
-
-    public TournamentDto getTournamentById(int id) {
-        for (TournamentDto dto : getTournaments()) {
-            if (dto.id == id) {
-                return dto;
+    public List<LolLeagueDto> getLeagues() {
+        List<LolLeagueDto> cached = leaguesCache;
+        if (cached == null) {
+            synchronized (this) {
+                cached = leaguesCache;
+                if (cached == null) {
+                    LolLeaguesResponse response = execute(
+                            api.getLeagues(ApiConfig.LANGUAGE), "getLeagues");
+                    List<LolLeagueDto> leagues = response.data == null
+                            ? null
+                            : response.data.leagues;
+                    cached = leagues == null
+                            ? Collections.<LolLeagueDto>emptyList()
+                            : Collections.unmodifiableList(new ArrayList<>(leagues));
+                    leaguesCache = cached;
+                }
             }
         }
-        return null;
+        return cached;
     }
 
-    public List<MatchDto> getMatches() {
-        if (matchesCache == null) {
-            List<MatchDto> parsed = parse(MATCHES_JSON, new TypeToken<List<MatchDto>>() {
-            }.getType());
-            matchesCache = parsed == null ? new ArrayList<MatchDto>() : parsed;
-        }
-        return matchesCache;
-    }
-
-    public MatchDto getMatchById(int id) {
-        for (MatchDto dto : getMatches()) {
-            if (dto.id == id) {
-                return dto;
+    public List<LolEventDto> getSchedule() {
+        List<LolEventDto> cached = scheduleCache;
+        if (cached == null) {
+            synchronized (this) {
+                cached = scheduleCache;
+                if (cached == null) {
+                    LolScheduleResponse response = execute(
+                            api.getSchedule(ApiConfig.LANGUAGE), "getSchedule");
+                    List<LolEventDto> events = response.data == null
+                            || response.data.schedule == null
+                            ? null
+                            : response.data.schedule.events;
+                    cached = events == null
+                            ? Collections.<LolEventDto>emptyList()
+                            : Collections.unmodifiableList(new ArrayList<>(events));
+                    scheduleCache = cached;
+                }
             }
         }
-        return null;
+        return cached;
     }
 
-    public UserDto authenticate(String login, String password) {
-        for (UserDto dto : users) {
-            if (dto.login.equals(login) && dto.password.equals(password)) {
-                return dto;
-            }
-        }
-        return null;
+    /** Сбрасывает кэш — используется кнопкой «Повторить» после ошибки. */
+    public synchronized void clearCache() {
+        teamsCache = null;
+        leaguesCache = null;
+        scheduleCache = null;
     }
 
-    public UserDto createUser(String login, String password) {
-        for (UserDto existing : users) {
-            if (existing.login.equals(login)) {
-                return null;
-            }
-        }
-        UserDto dto = new UserDto();
-        dto.id = userIdSequence++;
-        dto.login = login;
-        dto.password = password;
-        dto.nickname = login;
-        dto.email = login + "@cybersport-tracker.ru";
-        dto.avatar_url = "https://mockapi.io/avatars/" + dto.id + ".png";
-        users.add(dto);
-        return dto;
-    }
-
-    private <T> T parse(String json, Type type) {
+    private <T> T execute(Call<T> call, String endpoint) {
         try {
-            return gson.fromJson(json, type);
-        } catch (RuntimeException e) {
-            return null;
+            Response<T> response = call.execute();
+            if (!response.isSuccessful()) {
+                throw new NetworkException(
+                        "HTTP " + response.code() + " при запросе " + endpoint,
+                        response.code(), null);
+            }
+            T body = response.body();
+            if (body == null) {
+                throw new NetworkException(
+                        "Пустой ответ " + endpoint, response.code(), null);
+            }
+            return body;
+        } catch (IOException e) {
+            throw new NetworkException(
+                    "Нет соединения с сервером (" + endpoint + "): " + e.getMessage(),
+                    0, e);
         }
     }
 }
